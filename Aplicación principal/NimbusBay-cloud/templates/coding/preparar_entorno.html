@@ -1,0 +1,82 @@
+<!-- templates/preparar.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Preparando tu entorno</title>
+    <style>
+        /* Un estilo básico para centrar el contenido y mostrar un spinner */
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; background: #f2f2f2; }
+        #progress-container { text-align: center; }
+        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div id="progress-container">
+    <h2 id="progress-message">Preparando entorno...</h2>
+    <div class="spinner"></div>
+</div>
+
+<script>
+
+    async function fetchWithRetry(url, options = {}, retries = 60, delay = 1000) {
+        try {
+            const response = await fetch(url, options);
+            // Si la respuesta no es "ok", se lanza error para forzar el reintento
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response;
+        } catch (error) {
+            if (retries > 0) {
+                console.warn(`Error: ${error.message}. Reintentando en ${delay}ms...`);
+                await new Promise(res => setTimeout(res, delay));
+                return fetchWithRetry(url, options, retries - 1, delay);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    async function prepararEntorno() {
+        const username = "{{ username }}";
+        const project = "{{ project }}";
+        const BASE_URL = `terminal-${username.toLowerCase()}-${project.toLowerCase()}-131700382768.europe-west1.run.app`;
+
+        try {
+            // 1. Crear el contenedor
+            document.getElementById('progress-message').innerText = "Creando contenedor...";
+            let response = await fetch(`/coding/crear_contenedor?username=${username}&project=${project}`);
+            let data = await response.json();
+            if(data.status !== "ok") throw data.message;
+
+            // 2. Importar el proyecto (FastAPI)
+            document.getElementById('progress-message').innerText = "Importando proyecto...";
+            // Suponemos que el endpoint de importación está en FastAPI, por ejemplo en localhost:8002
+            response = await fetchWithRetry(`https://${BASE_URL}/importar-proyecto?username=${username}&project=${project}`, { method: 'POST' });
+            data = await response.json();
+            if(!data.mensaje) throw "Error en import-project";
+
+            // 3. Instalar los wheels (FastAPI)
+            document.getElementById('progress-message').innerText = "Instalando librerías...";
+            response = await fetch(`https://${BASE_URL}/install-wheels?username=${username}&project=${project}`, { method: 'POST' });
+            data = await response.json();
+            if(!data.mensaje) throw "Error en install-wheels";
+
+            // 4. Todo listo, redirigir al usuario
+            document.getElementById('progress-message').innerText = "Preparación completada. Redirigiendo...";
+            setTimeout(function(){
+                window.location.href = `/coding/${username}/${project}`;
+            }, 1500);
+
+        } catch (error) {
+            document.getElementById('progress-message').innerText = "Error: " + error;
+        }
+    }
+
+    // Iniciar la preparación al cargar la página
+    window.onload = prepararEntorno;
+</script>
+</body>
+</html>

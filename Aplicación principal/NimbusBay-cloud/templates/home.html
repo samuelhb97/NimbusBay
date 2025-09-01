@@ -1,0 +1,178 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NimbusBay - Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Global */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Helvetica Neue', sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        /* Header */
+        header {
+            background-color: #333;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #444;
+        }
+        header .left {
+            display: flex;
+            align-items: center;
+        }
+        header .left a {
+            text-decoration: none;
+            color: #fff;
+            margin-right: 15px;
+        }
+        header .left a:hover {
+            text-decoration: underline;
+        }
+        header .left .nav-links a {
+            text-decoration: none;
+            color: #fff;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+        header .left .nav-links a:hover {
+            text-decoration: underline;
+        }
+        header .right {
+            display: flex;
+            align-items: center;
+        }
+        header .right a button,
+        header .right button {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background-color: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        header .right a button:hover,
+        header .right button:hover {
+            text-decoration: underline;
+        }
+        /* Hero */
+        .hero {
+            flex: 1;
+            background: url('https://source.unsplash.com/random/1600x900/?cloud') center center/cover no-repeat;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .hero-logo {
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            margin: 0;
+            color: #fff;
+        }
+        .hero p {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            color: #e0e0e0;
+        }
+        .cta-buttons {
+            margin-top: 20px;
+        }
+        .cta-button {
+            background-color: #0077cc;
+            color: #fff;
+            padding: 10px 20px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s ease;
+
+        }
+        .cta-button:hover {
+            background-color: #005fa3;
+        }
+        /* Footer */
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 20px;
+            border-top: 1px solid #444;
+            font-size: 14px;
+        }
+        .cta-button.proyectos {
+            display: inline-block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="left">
+            <a href="{% url 'home' %}">
+                <img src="https://storage.googleapis.com/nimbus-static_files/logo_recortado.png" alt="NimbusBay" style="height:40px;">
+            </a>
+            <div class="nav-links">
+                <a href="/features">Características</a>
+                <a href="/about">Acerca de</a>
+                <a href="/contact">Contacto</a>
+            </div>
+        </div>
+        <div class="right">
+            {% if user.is_authenticated %}
+                <a href="/coding/lista/{{ user.username }}"><button>Proyectos</button></a>
+                <a href="/coding/mensajes"><button>Mensajes</button></a>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}"><button>Iniciar Sesión</button></a>
+                <a href="{% url 'registro' %}"><button>Registrarse</button></a>
+            {% endif %}
+        </div>
+    </header>
+
+    <section class="hero">
+        <img src="https://storage.googleapis.com/nimbus-static_files/logo_recortado.png" alt="NimbusBay Logo" class="hero-logo">
+        <h1>NimbusBay</h1>
+        <p>La plataforma definitiva para gestionar tus proyectos en la nube</p>
+        <div class="cta-buttons">
+            {% if user.is_authenticated %}
+                <div style="color: #fff; font-size: 1.2rem; margin-bottom: 10px;">
+                    Bienvenido, {{ user.username }}. Explora tu espacio de trabajo.
+                </div>
+                <a href="/coding/lista/{{ user.username }}" class="cta-button proyectos">Ver Proyectos</a>
+
+            {% else %}
+                <a href="{% url 'registro' %}" class="cta-button">Comienza Ahora</a>
+                <a href="{% url 'login' %}" class="cta-button">Inicia Sesión</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 NimbusBay. Todos los derechos reservados.</p>
+    </footer>
+</div>
+</body>
+</html>

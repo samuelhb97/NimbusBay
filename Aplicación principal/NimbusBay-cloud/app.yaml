@@ -1,0 +1,30 @@
+runtime: python
+env: flex
+
+entrypoint: gunicorn -b :8080 djangoProject.wsgi
+
+runtime_config:
+    operating_system: "ubuntu22"
+    runtime_version: "3.12"
+
+beta_settings:
+  cloud_sql_instances: ""
+
+env_variables:
+  DJANGO_SETTINGS_MODULE: "djangoProject.settings"
+  SECRET_KEY: ""
+  DJANGO_SERVICE_SECRET: ""
+  DEBUG: "False"
+  ALLOWED_HOSTS: ""
+  DB_NAME: ""
+  DB_USER: ""
+  DB_PASSWORD: ""
+  CLOUD_SQL_CONNECTION_NAME: ""
+  SMTP_USER: ""
+  SMTP_PASS: ""
+
+
+resources:
+  cpu: 1
+  memory_gb: 1
+  disk_size_gb: 10

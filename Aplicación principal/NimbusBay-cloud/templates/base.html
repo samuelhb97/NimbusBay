@@ -1,0 +1,111 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Mi Aplicación{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Estilos globales */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Consolas, "Courier New", monospace;
+            background-color: #1e1e1e;
+            color: #cccccc;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+        /* Header con enlace Home y botones sin fondo */
+        header {
+            height: 50px;
+            background-color: #333333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid #444;
+            flex-shrink: 0;
+        }
+        header .left a {
+            text-decoration: none;
+            color: #ffffff;
+        }
+        header .left a:hover {
+            text-decoration: underline;
+        }
+        header .left h1 {
+            font-size: 18px;
+            margin: 0;
+        }
+        header .right {
+            display: flex;
+            align-items: center;
+        }
+        header .right a button,
+        header .right button {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background-color: transparent;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        header .right a button:hover,
+        header .right button:hover {
+            text-decoration: underline;
+        }
+        /* Main y Footer */
+        main {
+            flex: 1;
+            padding: 20px;
+        }
+        footer {
+            height: 30px;
+            background-color: #333333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #444;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="left">
+            <a href="{% url 'home' %}">
+                <h1>Home</h1>
+            </a>
+        </div>
+        <div class="right">
+            {% if not user.is_authenticated %}
+                <a href="{% url 'login' %}"><button>Iniciar Sesión</button></a>
+                <a href="{% url 'registro' %}"><button>Registrarse</button></a>
+            {% else %}
+                <a href="/coding/lista/{{ user.username }}"><button>Proyectos</button></a>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        {% block content %}
+        <!-- Aquí irá el contenido específico de cada página -->
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; {{ user.username|default:"Invitado" }} - Mi Aplicación</p>
+    </footer>
+</div>
+</body>
+</html>

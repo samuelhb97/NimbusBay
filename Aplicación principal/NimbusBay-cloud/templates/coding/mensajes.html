@@ -1,0 +1,266 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mensajes - Mi Aplicación</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Consolas, "Courier New", monospace;
+            background-color: #1e1e1e;
+            color: #cccccc;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        /* Header común */
+        header {
+      background-color: #333;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #444;
+    }
+    header .left {
+      display: flex;
+      align-items: center;
+    }
+    header .left a {
+      text-decoration: none;
+      color: #fff;
+      margin-right: 15px;
+    }
+    header .left a:hover {
+      text-decoration: underline;
+    }
+    header .left .nav-links a {
+      text-decoration: none;
+      color: #fff;
+      margin-right: 15px;
+      font-size: 16px;
+    }
+    header .left .nav-links a:hover {
+      text-decoration: underline;
+    }
+    header .right {
+      display: flex;
+      align-items: center;
+    }
+    header .right a button,
+    header .right button {
+      margin-left: 10px;
+      padding: 6px 12px;
+      background-color: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    header .right a button:hover,
+    header .right button:hover {
+      text-decoration: underline;
+    }
+        /* Main: área de contenido */
+        main {
+            flex: 1;
+            padding: 20px;
+        }
+        /* Footer común */
+        footer {
+            height: 30px;
+            background-color: #333333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #444;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        /* Estilos para la lista de mensajes */
+        .mensaje {
+            border: 1px solid #444;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        .mensaje p {
+            margin: 0 0 10px 0;
+        }
+        .mensaje button {
+            padding: 4px 8px;
+            margin-right: 5px;
+            background-color: #0e639c;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .mensaje button:hover {
+            background-color: #1177bb;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="left">
+            <a href="{% url 'home' %}">
+                <img src="https://storage.googleapis.com/nimbus-static_files/logo_recortado.png" alt="NimbusBay" style="height:40px;">
+            </a>
+            <div class="nav-links">
+                <a href="/features">Características</a>
+                <a href="/about">Acerca de</a>
+                <a href="/contact">Contacto</a>
+            </div>
+        </div>
+        <div class="right">
+            {% if user.is_authenticated %}
+                <a href="/coding/lista/{{ user.username }}"><button>Proyectos</button></a>
+                <a href="/mensajes"><button>Mensajes</button></a>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}"><button>Iniciar Sesión</button></a>
+                <a href="{% url 'registro' %}"><button>Registrarse</button></a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <h2>Mensajes recibidos</h2>
+        <div id="mensajes-container">
+            {% for msg in solicitudes %}
+                <div class="mensaje" id="mensaje-{{ msg.id }}">
+                    <p>{{ msg.sender.username }} quiere compartir su proyecto "{{ msg.project }}" contigo. ¿Quieres importarlo a tu lista de proyectos?</p>
+                    <p class="mensaje-timestamp">Enviado el: {{ msg.timestamp|date:"d/m/Y H:i"  }}</p>
+                    <button class="respuesta-btn" data-id="{{ msg.id }}" data-response="accepted">Sí</button>
+                    <button class="respuesta-btn" data-id="{{ msg.id }}" data-response="rejected">No</button>
+                </div>
+            {% empty %}
+                <p>No tienes solicitudes.</p>
+            {% endfor %}
+        </div>
+    </main>
+    <footer>
+        <p>&copy; {{ user.username|default:"Invitado" }} - Mi Aplicación</p>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        // Función para obtener el token CSRF, si es necesario
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const respuestaBtns = document.querySelectorAll(".respuesta-btn");
+        respuestaBtns.forEach(function(btn){
+            btn.addEventListener("click", async function(){
+                const shareId = this.dataset.id;
+                const responseValue = this.dataset.response;
+                // Si la respuesta es "accepted", mostramos el spinner
+                if(responseValue === "accepted"){
+                    showSpinner("Importando proyecto...");
+                }
+                try {
+                    const res = await fetch("{% url 'aceptar_share' %}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-CSRFToken": getCookie("csrftoken")
+                        },
+                        body: new URLSearchParams({
+                            "share_id": shareId,
+                            "response": responseValue
+                        })
+                    });
+                    if (!res.ok) {
+                        const errorText = await res.text();
+                        throw new Error(`HTTP ${res.status}: ${errorText}`);
+                    }
+                    const data = await res.json();
+                    if(data.error) {
+                        alert("Error: " + data.error);
+                    } else {
+                        // Eliminar el mensaje procesado de la interfaz
+                        document.getElementById("mensaje-" + shareId).remove();
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    console.error("Error respondiendo la solicitud:", error);
+                    alert("Error respondiendo la solicitud. Revisa la consola para más detalles.");
+                } finally {
+                    if(responseValue === "accepted"){
+                        hideSpinner();
+                    }
+                }
+            });
+        });
+    });
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Si la cookie comienza con el nombre que queremos...
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showSpinner(message) {
+        let spinner = document.getElementById("spinnerOverlay");
+        if (!spinner) {
+            spinner = document.createElement("div");
+            spinner.id = "spinnerOverlay";
+            spinner.style.position = "fixed";
+            spinner.style.top = "0";
+            spinner.style.left = "0";
+            spinner.style.width = "100%";
+            spinner.style.height = "100%";
+            spinner.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+            spinner.style.display = "flex";
+            spinner.style.alignItems = "center";
+            spinner.style.justifyContent = "center";
+            spinner.style.zIndex = "2000";
+            document.body.appendChild(spinner);
+        }
+        spinner.innerHTML = `<div style="color: white; font-size: 20px;">${message}</div>`;
+        spinner.style.display = "flex";
+    }
+
+    function hideSpinner() {
+        const spinner = document.getElementById("spinnerOverlay");
+        if (spinner) {
+            spinner.style.display = "none";
+        }
+    }
+
+
+</script>
+</body>
+</html>

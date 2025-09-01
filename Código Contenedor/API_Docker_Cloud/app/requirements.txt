@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+aiofiles
+Pillow
+requests
+google-cloud-storage
